@@ -1,6 +1,5 @@
 import { EventEmitter } from "events";
 import ws from 'ws';
-import crypto from 'crypto';
 
 export default class SDAGEvent extends EventEmitter {
 
@@ -9,7 +8,7 @@ export default class SDAGEvent extends EventEmitter {
     private pendingRequests = new Map<string, (resp?: IRequestResponse) => void>();
     private tag = 0;
     connected = false;
-    peerId?: string;
+    peerId: string;
 
     constructor(opts: { peerId: string }) {
         super();
@@ -136,8 +135,7 @@ export default class SDAGEvent extends EventEmitter {
     }
 
     sendSubscribe() {
-        let id = crypto.randomBytes(32).toString('hex');
-        this.sendRequest({ command: 'subscribe', params: { peer_id: this.peerId || id, last_mci: 10, } });
+        this.sendRequest({ command: 'subscribe', params: { peer_id: this.peerId, last_mci: 10, } });
     }
 
     private handleJustsaying(content: IJustsayingResponse) {
@@ -173,6 +171,9 @@ export default class SDAGEvent extends EventEmitter {
         super.addListener('server_lost', cb);
     }
 
+    watch(address: string) {
+
+    }
 
     close() {
         if (!this.ws) return;
