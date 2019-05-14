@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import ws from 'ws';
+import randomBytes from 'randombytes';
 
 export default class SDAGEvent extends EventEmitter {
 
@@ -11,9 +12,9 @@ export default class SDAGEvent extends EventEmitter {
     connected = false;
     peerId: string;
 
-    constructor(opts: { peerId: string }) {
+    constructor(opts: { peerId?: string }) {
         super();
-        this.peerId = opts.peerId;
+        this.peerId = opts.peerId || randomBytes(32).toString('hex');
     }
 
     private createSocket(address: string) {
