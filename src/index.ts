@@ -4,9 +4,10 @@ import ws from 'ws';
 export default class SDAGEvent extends EventEmitter {
 
     private ws: WebSocket | ws;
-    private address: string;
+    private url: string;
     private pendingRequests = new Map<string, (resp?: IRequestResponse) => void>();
     private tag = 0;
+    private addresses: string[] = [];
     connected = false;
     peerId: string;
 
@@ -47,7 +48,7 @@ export default class SDAGEvent extends EventEmitter {
             this.emit('server_lost');
 
             setTimeout(() => {
-                this.ws = this.createSocket(this.address);
+                this.ws = this.createSocket(this.url);
                 this.setup(this.ws);
             }, 3000);
         };
@@ -61,10 +62,10 @@ export default class SDAGEvent extends EventEmitter {
         }
 
         address = address.startsWith('ws') ? address : 'ws://' + address;
-        this.address = address;
+        this.url = address;
 
         return new Promise<boolean>((resolve) => {
-            this.ws = this.createSocket(this.address);
+            this.ws = this.createSocket(this.url);
             let timeout = setTimeout(() => resolve(false), 5000);
             this.setup(this.ws, () => {
                 clearTimeout(timeout);
@@ -145,7 +146,15 @@ export default class SDAGEvent extends EventEmitter {
                 break;
 
             case 'notify':
-                this.emit('NotifyMessage', content.body);
+                const msg = content.body as NotifyMessage;
+                this.emit('NotifyMessage', msg);
+
+                let receivers = msg.to_msg.map(t => { return { to: t[0] as string, amount: t[1] as number } });
+                let [to] = receivers.filter(t => this.addresses.includes(t.to));
+                let e = this.addresses.includes(msg.from) ? 'out' : to ? 'in' : undefined;
+
+                if (!e) return;
+                this.emit(e, { from: msg.from, to: to ? to.to : undefined, amount: to ? to.amount : undefined, text: msg.text, timestamp: msg.time, unit: msg.unit });
                 break;
         }
     }
@@ -171,8 +180,10 @@ export default class SDAGEvent extends EventEmitter {
         super.addListener('server_lost', cb);
     }
 
-    watch(address: string) {
-
+    watch(addresses: string[]) {
+        this.addresses = this.addresses.concat(addresses);
+        this.sendRequest({ command: 'watch', params: addresses });
+        return this;
     }
 
     close() {
@@ -217,4 +228,12 @@ export interface IJustsayingResponse {
 export interface IRequestResponse {
     response: any; //PropertyJoint | NetworkInfo | Balance | { joints: Joint[] } | { transactions: Transaction[] };
     tag: string;
+}
+
+export interface NotifyMessage {
+    from: string;
+    text: string;
+    time: number;
+    to_msg: (number | string)[][];
+    unit: string;
 }

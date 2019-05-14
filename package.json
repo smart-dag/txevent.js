@@ -51,6 +51,7 @@
     "node": ">=8.9"
   },
   "dependencies": {
+    "randombytes": "^2.1.0",
     "ws": "^7.0.0"
   },
   "devDependencies": {
