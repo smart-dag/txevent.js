@@ -55,7 +55,7 @@ export default class SDAGEvent extends EventEmitter {
         };
     }
 
-    async connect(address: string) {
+    async connect(address: string = 'ws://hub.sdag.io:8086') {
         this.close();
 
         if (!address) {
