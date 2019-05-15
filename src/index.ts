@@ -12,7 +12,7 @@ export default class SDAGEvent extends EventEmitter {
     connected = false;
     peerId: string;
 
-    constructor(opts: { peerId?: string }) {
+    constructor(opts: { peerId?: string } = {}) {
         super();
         this.peerId = opts.peerId || randomBytes(32).toString('hex');
     }
@@ -95,13 +95,13 @@ export default class SDAGEvent extends EventEmitter {
         }
     }
 
-    send(type: 'request' | 'justsaying' | 'response', content: any) {
+    private send(type: 'request' | 'justsaying' | 'response', content: any) {
         if (this.ws.readyState !== this.ws.OPEN) return false;
         this.ws.send(JSON.stringify([type, content]));
         return true;
     }
 
-    sendRequest(content: IRequestContent, resolver?: (resp?: IRequestResponse) => void): string {
+    private sendRequest(content: IRequestContent, resolver?: (resp?: IRequestResponse) => void): string {
         let rid: string = content.tag = content.tag || `${Date.now()}_${this.tag++}`;
         this.send('request', content);
 
@@ -112,31 +112,31 @@ export default class SDAGEvent extends EventEmitter {
         return rid;
     }
 
-    sendJustsaying(content: { subject, body }) {
+    private sendJustsaying(content: { subject, body }) {
         this.send('justsaying', content);
     }
 
-    sendResponse(content: any) {
+    private sendResponse(content: any) {
         this.send('response', content);
     }
 
-    sendErrorResponse(tag: any, error: any) {
+    private sendErrorResponse(tag: any, error: any) {
         this.sendResponse({ tag, response: { error } });
     }
 
-    sendError(content: any) {
+    private sendError(content: any) {
         this.sendJustsaying({ subject: 'error', body: content });
     }
 
-    sendVersion(body: { protocol_version: string, alt: string, library: string, library_version: string, program: string, program_version: string }) {
+    private sendVersion(body: { protocol_version: string, alt: string, library: string, library_version: string, program: string, program_version: string }) {
         this.sendJustsaying({ subject: 'version', body });
     }
 
-    sendHeartbeat() {
+    private sendHeartbeat() {
         this.sendRequest({ command: 'heartbeat', });
     }
 
-    sendSubscribe() {
+    private sendSubscribe() {
         this.sendRequest({ command: 'subscribe', params: { peer_id: this.peerId, last_mci: 10, } });
     }
 
