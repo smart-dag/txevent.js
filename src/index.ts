@@ -149,10 +149,10 @@ export default class SDAGEvent extends EventEmitter {
             case 'notify':
                 const msg = content.body as NotifyMessage;
                 this.emit('NotifyMessage', msg);
-
+                
                 let receivers = msg.to_msg.map(t => { return { to: t[0] as string, amount: t[1] as number } });
                 let [to] = receivers.filter(t => this.addresses.includes(t.to));
-                let e = this.addresses.includes(msg.from) ? 'out' : to ? 'in' : undefined;
+                let e = this.addresses.includes(msg.from) ? 'out' : (to ? 'in' : undefined);
 
                 if (!e) return;
                 this.emit(e, { from: msg.from, to: to ? to.to : undefined, amount: to ? to.amount : undefined, text: msg.text, timestamp: msg.time, unit: msg.unit });
@@ -236,5 +236,14 @@ export interface NotifyMessage {
     text: string;
     time: number;
     to_msg: (number | string)[][];
+    unit: string;
+}
+
+export interface InOutMessage {
+    from: string;
+    to: string;
+    amount: number;
+    text?: string;
+    timestamp: number;
     unit: string;
 }
